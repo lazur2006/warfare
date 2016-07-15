@@ -6,20 +6,15 @@
 ********************ALL RIGHTS RESERVED (C)*****************
 ***********************************************************/
 
-/*
-Tasks: Gegner können schießen; Ausgabe von Spielfeld als String; Funktionen sortieren;
-	   Variabeln in Funktionen und nicht alle global; ForSchleifen starten bei 0;
-	   Im MainMenu Hinweis auf tastenbelegung;
-*/
-
 #include "stdafx.h"
 #include "conio.h"
 #include "windows.h"
 #include "time.h"
 #include "string.h"
-///Fehler 4996: fprintf_s Funktion wird nicht genutzt. 
-///Es ist aber beabsichtigt das nicht die _s variante verwendet wird
-///da es bei der _s variante zur Abfrage der Zeichenlänge kommt, diese aber nicht defineirt ist.
+///Fehler 4996: fprintf_s Funktion soll nicht genutzt werden, da ein evtl. Fehler mit NULL in einer
+///if Abfrage abgefangen wird. 
+///Außerdem erfordert _s die Definition der Zeichenlänge. Diese ist dem Programm jedoch nicht bekannt
+///wenn es neu gestartet wird und aus der txt-Datei ausliest.
 #pragma warning(disable:4996)
 
 //Init Grafik-Array "WARFARE"
@@ -58,7 +53,7 @@ int gfx_top[288] = {
 };
 
 //Init Spielfeld
-char feld[21][30];
+unsigned char feld[21][31];
 int y, x = 0;
 int mov_down = 3; ///Welcome Nachricht startet bei y=3 und wird hochgezählt um abwärts zu laufen
 int lauf = 0;
@@ -76,7 +71,6 @@ int ps_compare_b;
 int ps_j, ps_k;
 int set_score = 0;
 int name_idx;
-
 //Init Steuerung Player
 int p_cursor_x; ///Start Position X-Achse
 
@@ -151,38 +145,158 @@ int main()
 	return 0;
 }
 
-void read_keyboard(int taste) {
-	switch (taste) {
-	case 49: game_mode = 2;		//Erkenne Taste: "1" und gehe zu Init_game()
+void wake_up(void) {
+	system("cls");
+	int i = 0;
+
+	for (y = 1; y <= 15; y++) {
+		for (x = 1; x <= 20; x++) {
+			i++;
+			system("color 0F");
+			if (gfx[i] == 1) {
+
+				feld[y][x] = 219;
+			}
+			else {
+				feld[y][x] = ' ';
+			}
+
+			printf("%c", feld[y][x]);
+		}
+		printf("\n");
+	}
+	system("color 0C");
+	printf("\nLET THE FIGHT BEGIN \n    ver. 1.00.0 \n  by KAI n' LAURA\n");
+	printf("\n\nType your name\n\n >> ");
+	scanf_s("%s", &name, 10);
+	game_mode = 1;
+}
+
+void main_menu(void) {
+	
+	int i = 0;
+	char tmp_print[700];
+	int tmp_count = 0;
+	system("color 0C");
+	for (y = 1; y <= 15; y++) {
+		for (x = 1; x <= 20; x++) {
+			i++;
+			if (gfx[i] == 1) {
+				feld[y][x] = 219;
+			}
+			else {
+				feld[y][x] = ' ';
+			}
+
+			tmp_print[tmp_count] = feld[y][x];
+			tmp_count++;
+		}
+		tmp_print[tmp_count] = '\n';
+		tmp_count++;
+		if (tmp_count == 620) tmp_count = 0;
+	}
+	system("cls");
+	printf("%s", tmp_print);
+	printf("> %s choose your task\n", name);
+	printf("(1) for fight\n");
+	printf("(2) for stats\n");
+	printf("(3) for quit");
+	printf("\n\n--------------------\n<-  Move left\n->  Move right\nm   Shot");
+	Sleep(100);
+}
+
+void init_game(void) {
+	//Bereite Spielbrett vor
+
+	switch (level) {
+
+		//LEVEL 1
+	case 1:
+		score = 0;
+		p_cursor_x = 15;
+		anzahl_shot = 0;
+		gegner_anzahl = 0;
+		cycles = 0;
+
+		for (y = 1; y < 21; y++) {
+			for (x = 1; x < 31; x++) {
+				if (x == 1 || x == 30 || y == 1 || y == 20) {
+					feld[y][x] = 219;
+				}
+				else if (x > 4 && x < 27 && y > 2 && y < 15 && (x % 2) == 0 && (y % 2) == 0) {
+					//Gegner einfügen
+					feld[y][x] = 2;
+					gegner_anzahl++;
+				}
+				else if (x == p_cursor_x && y == 19) {
+					//Player einfügen
+					feld[y][x] = 30;
+				}
+				else {
+					feld[y][x] = ' ';
+				}
+			}
+		}
+		game_mode = 3;
+		gegner_speed = 8;
 		break;
-	case 50: game_mode = 6;		//Erkenne Taste: "2" und gehe zu stats()
-		break;
-	case 51: quit = 1;			//Erkenne Taste: "3" und beende Programm
-		break;
-	case 77: p_cursor_x++;		//Erkenne Taste: "Pfeil rechts" und bewege Cursor Rechts
-		if (p_cursor_x > 29) p_cursor_x = 2;
-		break;
-	case 75: p_cursor_x--;		//Erkenne Taste: "Pfeil links" und bewege Cursor Links
-		if (p_cursor_x < 2) p_cursor_x = 29;
-		break;
-	case 109: shot = 1;			//Erkenne Taste: "M" und aktiviere Schuss
-		break;
-	default:
+		//LEVEL 2
+	case 2:
+		p_cursor_x = 15;
+		anzahl_shot = 0;
+		gegner_anzahl = 0;
+		cycles = 0;
+
+		for (y = 1; y < 21; y++) {
+			for (x = 1; x < 31; x++) {
+				if (x == 1 || x == 30 || y == 1 || y == 20) {
+					feld[y][x] = 219;
+				}
+				else if (x > 4 && x < 27 && y > 2 && y < 18 && (x % 2) == 0 && (y % 2) == 0) {
+					//Gegner einfügen
+					feld[y][x] = 2;
+					gegner_anzahl++;
+				}
+				else if (x == p_cursor_x && y == 19) {
+					//Player einfügen
+					feld[y][x] = 30;
+				}
+				else {
+					feld[y][x] = ' ';
+				}
+			}
+		}
+		game_mode = 3;
+		gegner_speed = 3;
 		break;
 	}
+
 
 }
 
 void game(void) {
+	char tmp_print[700];
+	int tmp_count = 0;
+	int enemy_sht;
 	system("cls");
-	for (y = 1; y <= 20; y++) {
-		for (x = 1; x <= 30; x++) {
-			//Erst Spielfeld drucken welches in init game erstellt wurde
-			printf("%c", feld[y][x]);
+	enemy_sht = 0;
+	for (y = 1; y < 21; y++) {
+		for (x = 1; x < 31; x++) {
+			//Spielfeld als String übergeben
+			tmp_print[tmp_count] = feld[y][x];
+			tmp_count++;
 			//Dann Spielfeld manipulieren...
 			//Player bewegen
 			if (feld[y][x] == 30 && p_cursor_x != x) {
 				feld[19][p_cursor_x] = 30;
+				feld[y][x] = ' ';
+			}
+			else if (feld[y][x] == 178 && enemy_sht == 1) {
+				feld[y+1][x] = 254;
+				enemy_sht = 0;
+			}
+			else if (feld[y][x] == 254) {
+				feld[y+1][x] = 254;
 				feld[y][x] = ' ';
 			}
 			//Schuss abfeuern
@@ -197,7 +311,7 @@ void game(void) {
 				feld[y - 1][x] = '^';
 			}
 			//Wenn Gegner getroffen, mache ihn zu + -> Wegen Simulation einer Explosion
-			else if (feld[y][x] == '^' && feld[y - 1][x] == 1 || feld[y][x] == '^' && feld[y - 1][x] == '+') {
+			else if (feld[y][x] == '^' && feld[y - 1][x] == 2 || feld[y][x] == '^' && feld[y - 1][x] == '+') {
 				feld[y - 1][x] = '+';
 				feld[y][x] = ' ';
 				--gegner_anzahl;
@@ -213,27 +327,32 @@ void game(void) {
 				feld[y][x] = ' ';
 			}
 			//Bewege Gegner eine Zeile tiefer alle n Zyklen -> n wird durch Gegner_speed definiert
-			else if (feld[y][x] == 1 && feld[y + 1][x] == ' ' && cycles == gegner_speed) {
-				feld[y + 1][x] = 1;
+			else if (feld[y][x] == 2 && feld[y + 1][x] == ' ' && cycles == gegner_speed) {
+				feld[y + 1][x] = 2;
 				feld[y][x] = ' ';
 				cycles = 0;
 				//Wenn Gegner Zeile 19 erreicht ist das Spiel verloren
-				if (feld[19][x] == 1) {
+				if (feld[19][x] == 2) {
 					game_mode = 5;
 					level = 1;
 				}
 			}
 
 		}
-		printf("\n");
+		//printf("\n");		
+		tmp_print[tmp_count] = '\n';
+		tmp_count++;
+		if (tmp_count == 620) tmp_count = 0;
 	}
+
+	printf("%s", tmp_print);
 	printf("\n>> PLAYER: %s \n>> SCORE: %d \n>> SHOTS: %4.d   >> LEVEL: %d", name, score, anzahl_shot, level);
 	cycles++;
 
 	//Wenn Gegner alle getötet in Level 1, sprung in Level 2
 	if (gegner_anzahl == 0 && level == 1) {
 		game_mode = 2;
-		level = 2;	
+		level = 2;
 		if (score < 8500) {
 			score = score + 1000;
 		}
@@ -253,6 +372,7 @@ void game(void) {
 		}
 	}
 	Sleep(10);
+
 }
 
 void won(void) {
@@ -294,269 +414,6 @@ void lose(void) {
 	//angezeigt wird wenn man aus dem Game Modus in stats kommt
 	set_score = 1;
 	handle_stats();
-}
-
-void wake_up(void) {
-	system("cls");
-	int i = 0;
-
-	for (y = 1; y <= 15; y++) {
-		for (x = 1; x <= 20; x++) {
-			i++;
-			system("color 0F");
-			if (gfx[i] == 1) {
-
-				feld[y][x] = 178;
-			}
-			else {
-				feld[y][x] = ' ';
-			}
-
-			printf("%c", feld[y][x]);
-		}
-		printf("\n");
-	}
-	system("color 0C");
-	printf("LET THE FIGHT BEGIN \n    ver. 1.00.0 \n  by KAI n' LAURA\n");
-	printf("\n\n   Type your name\n\n >> ");
-	scanf_s("%s", &name, 10);
-	game_mode = 1;
-}
-
-void init_game(void) {
-	//Bereite Spielbrett vor
-
-	switch (level) {
-
-		//LEVEL 1
-	case 1:	
-		score = 0;
-		p_cursor_x = 15;
-		anzahl_shot = 0;
-		gegner_anzahl = 0;
-		cycles = 0;
-
-		for (y = 1; y <= 20; y++) {
-			for (x = 1; x <= 30; x++) {
-				if (x == 1 || x == 30 || y == 1 || y == 20) {
-					feld[y][x] = 178;
-				}
-				else if (x > 4 && x < 27 && y > 2 && y < 15 && (x % 2) == 0 && (y % 2) == 0) {
-					//Gegner einfügen
-					feld[y][x] = 1;
-					gegner_anzahl++;
-				}
-				else if (x == p_cursor_x && y == 19) {
-					//Player einfügen
-					feld[y][x] = 30;
-				}
-				else {
-					feld[y][x] = ' ';
-				}
-			}
-		}
-		game_mode = 3;
-		gegner_speed = 8;
-		break;
-		//LEVEL 2
-	case 2: 
-		p_cursor_x = 15;
-		anzahl_shot = 0;
-		gegner_anzahl = 0;
-		cycles = 0;
-
-		for (y = 1; y <= 20; y++) {
-			for (x = 1; x <= 30; x++) {
-				if (x == 1 || x == 30 || y == 1 || y == 20) {
-					feld[y][x] = 178;
-				}
-				else if (x > 4 && x < 27 && y > 2 && y < 18 && (x % 2) == 0 && (y % 2) == 0) {
-					//Gegner einfügen
-					feld[y][x] = 1;
-					gegner_anzahl++;
-				}
-				else if (x == p_cursor_x && y == 19) {
-					//Player einfügen
-					feld[y][x] = 30;
-				}
-				else {
-					feld[y][x] = ' ';
-				}
-			}
-		}
-		game_mode = 3;
-		gegner_speed = 3;
-		break;
-	}
-
-
-}
-
-void main_menu(void) {
-	system("cls");
-	int i = 0;
-	system("color 0C");
-	for (y = 1; y <= 15; y++) {
-		for (x = 1; x <= 20; x++) {
-			i++;
-			if (gfx[i] == 1) {
-				feld[y][x] = 178;
-			}
-			else {
-				feld[y][x] = ' ';
-			}
-
-			printf("%c", feld[y][x]);
-		}
-		printf("\n");
-	}
-	printf("> %s choose your task\n", name);
-	printf("(1) for fight\n");
-	printf("(2) for stats\n");
-	printf("(3) for quit");
-	Sleep(1000);
-}
-
-void stats(void) {
-	//liste Top 10 auf
-	system("cls");
-	int i = 0;
-
-	for (y = 1; y <= 12; y++) {
-		for (x = 1; x <= 24; x++) {
-			i++;
-			if (gfx_top[i] == 1) {
-
-				feld[y][x] = 178;
-			}
-			else {
-				feld[y][x] = ' ';
-			}
-
-			printf("%c", feld[y][x]);
-		}
-		printf("\n");
-	}
-
-	
-	ps_index = 0;
-	//Bilde Array mit Score Werten ab
-	if (ps_i > 10) ps_i = 0;
-	for (ps_i = 0; ps_i <= 9; ps_i++) {
-		printf("  >> %2.d :: %11.d  ", ps_i + 1, ps_score[ps_i]);
-		for (i = ps_index; i <= 100; i++) {
-			
-			if (ps_puffer_name[i] == ' ') {				
-				ps_index = i+1;
-				i = 110;
-				
-			}
-			else {
-				printf("%c", ps_puffer_name[i]);
-			}
-		}
-		printf("\n");
-	}
-	if (set_score == 1) {
-		printf("\n\n >> YOUR SCORE %.9d <<", score);
-		set_score = 0;
-	}
-
-	Sleep(4000);
-	game_mode = 1;
-
-}
-
-void write_data(void) {
-	//Schreibe Spielergebnisse aus ps_score array in Datei "stats.txt"
-	FILE *datei;
-
-	datei = fopen("stats.txt", "w");
-
-	if (datei == NULL) {
-		//Wird Datei während Spiel gelöscht, 
-		//wird einfach eine Neue erstellt, da die Daten temporär im Array vorliegen
-	}
-	else {
-		//Schreibe Werte
-		ps_index = 0;
-		for (ps_i = 0; ps_i <= 9; ps_i++) {
-			fprintf(datei, "Score: %9.d  ", ps_score[ps_i]);
-				for (int i = ps_index; i <= 100; i++) {
-					if (ps_puffer_name[i] == ' ') {
-						ps_index = i + 1;
-						i = 110;
-					}
-					else {
-						fprintf(datei, "%c", ps_puffer_name[i]);
-					}
-				}
-		fprintf(datei, " ");
-		fprintf(datei, "\n");
-		}
-
-		
-		fclose(datei);
-	}
-}
-
-void read_data(void) {
-	//Lese Spielergebnisse aus Datei "stats.txt" und übertrage sie ins ps_score und ps_puffer_name Array
-	FILE *datei;
-
-	datei = fopen("stats.txt", "r");
-
-	if (datei == NULL) {
-		//Wenn Datei nicht vorhanden, wird das Format der Datei vorab schon mal geschrieben
-		//und das Score Array bzw. Name Array mit Werten gefüllt.
-		datei = fopen("stats.txt", "w");
-		ps_index = 0;
-		for (ps_i = 0; ps_i <= 9; ps_i++) {
-			fprintf(datei, "Score: %9.d  ", 1);
-			ps_score[ps_i] = 1;
-				fprintf(datei, "%c", '*');
-				for (int i = ps_index; i <= 20; i++) {
-					ps_puffer_name[i] = '*';
-					ps_puffer_name[i + 1] = ' ';
-					ps_index = i + 2;
-					i = 22;
-				}
-			fprintf(datei, " ");
-			fprintf(datei, "\n");
-		}
-		fclose(datei);
-	}
-	else {
-		//Lese Werte
-		ps_index = 0;
-		for (ps_i = 0; ps_i <= 9; ps_i++) {
-			fscanf_s(datei, "Score: %d  ", &ps_score[ps_i]);
-			for (int i = ps_index; i <= 100; i++) {
-				fscanf_s(datei, "%c", &ps_puffer_name[i]);
-				if (ps_puffer_name[i] == ' ') {
-					ps_puffer_name[i] = ' ';
-					ps_index = i + 1;
-					i = 110;
-				}
-			}
-			fprintf(datei, "\n");
-		}
-		
-		fclose(datei);
-	}
-	
-	
-	//Sortiere Array der Größe nach Absteigend
-	for (ps_j = 0; ps_j <= 10; ps_j++) {
-		ps_compare = ps_score[ps_j];
-		for (ps_k = 0; ps_k <= 10; ps_k++) {
-			if (ps_compare > ps_score[ps_k]) {
-				ps_score[ps_j] = ps_score[ps_k];
-				ps_score[ps_k] = ps_compare;
-				ps_compare = ps_score[ps_j];
-			}
-		}
-	}
 }
 
 void handle_stats(void) {
@@ -628,7 +485,7 @@ void change_name(void) {
 					c = 0;
 					a = 101;
 				}
-				search_idx + 1;
+				
 			}
 		}
 		strcat(tmp_string_b, name);
@@ -639,4 +496,167 @@ void change_name(void) {
 
 }
 
+void stats(void) {
+	//liste Top 10 auf
+	system("cls");
+	int i = 0;
+
+	for (y = 1; y <= 12; y++) {
+		for (x = 1; x <= 24; x++) {
+			i++;
+			if (gfx_top[i] == 1) {
+
+				feld[y][x] = 219;
+			}
+			else {
+				feld[y][x] = ' ';
+			}
+
+			printf("%c", feld[y][x]);
+		}
+		printf("\n");
+	}
+
+
+	ps_index = 0;
+	//Bilde Array mit Score Werten ab
+	if (ps_i > 10) ps_i = 0;
+	for (ps_i = 0; ps_i <= 9; ps_i++) {
+		printf("  >> %2.d :: %11.d  ", ps_i + 1, ps_score[ps_i]);
+		for (i = ps_index; i <= 100; i++) {
+
+			if (ps_puffer_name[i] == ' ') {
+				ps_index = i + 1;
+				i = 110;
+
+			}
+			else {
+				printf("%c", ps_puffer_name[i]);
+			}
+		}
+		printf("\n");
+	}
+	if (set_score == 1) {
+		printf("\n\n >> YOUR SCORE %.9d <<", score);
+		set_score = 0;
+	}
+
+	Sleep(4000);
+	game_mode = 1;
+
+}
+
+void read_data(void) {
+	//Lese Spielergebnisse aus Datei "stats.txt" und übertrage sie ins ps_score und ps_puffer_name Array
+	FILE *datei;
+
+	datei = fopen("stats.txt", "r");
+
+	if (datei == NULL) {
+		//Wenn Datei nicht vorhanden, wird das Format der Datei vorab schon mal geschrieben
+		//und das Score Array bzw. Name Array mit Werten gefüllt.
+		datei = fopen("stats.txt", "w");
+		ps_index = 0;
+		for (ps_i = 0; ps_i <= 9; ps_i++) {
+			fprintf(datei, "Score: %9.d  ", 1);
+			ps_score[ps_i] = 1;
+			fprintf(datei, "%c", '*');
+			for (int i = ps_index; i <= 20; i++) {
+				ps_puffer_name[i] = '*';
+				ps_puffer_name[i + 1] = ' ';
+				ps_index = i + 2;
+				i = 22;
+			}
+			fprintf(datei, " ");
+			fprintf(datei, "\n");
+		}
+		fclose(datei);
+	}
+	else {
+		//Lese Werte
+		ps_index = 0;
+		for (ps_i = 0; ps_i <= 9; ps_i++) {
+			fscanf(datei, "Score: %d  ", &ps_score[ps_i]);
+			for (int i = ps_index; i <= 100; i++) {
+				fscanf(datei, "%c", &ps_puffer_name[i]);
+				if (ps_puffer_name[i] == ' ') {
+					ps_puffer_name[i] = ' ';
+					ps_index = i + 1;
+					i = 110;
+				}
+			}
+			fprintf(datei, "\n");
+		}
+
+		fclose(datei);
+	}
+
+
+	//Sortiere Array der Größe nach Absteigend
+	for (ps_j = 0; ps_j <= 10; ps_j++) {
+		ps_compare = ps_score[ps_j];
+		for (ps_k = 0; ps_k <= 10; ps_k++) {
+			if (ps_compare > ps_score[ps_k]) {
+				ps_score[ps_j] = ps_score[ps_k];
+				ps_score[ps_k] = ps_compare;
+				ps_compare = ps_score[ps_j];
+			}
+		}
+	}
+}
+
+void write_data(void) {
+	//Schreibe Spielergebnisse aus ps_score array in Datei "stats.txt"
+	FILE *datei;
+
+	datei = fopen("stats.txt", "w");
+
+	if (datei == NULL) {
+		//Wird Datei während Spiel gelöscht, 
+		//wird einfach eine Neue erstellt, da die Daten temporär im Array vorliegen
+	}
+	else {
+		//Schreibe Werte
+		ps_index = 0;
+		for (ps_i = 0; ps_i <= 9; ps_i++) {
+			fprintf(datei, "Score: %9.d  ", ps_score[ps_i]);
+			for (int i = ps_index; i <= 100; i++) {
+				if (ps_puffer_name[i] == ' ') {
+					ps_index = i + 1;
+					i = 110;
+				}
+				else {
+					fprintf(datei, "%c", ps_puffer_name[i]);
+				}
+			}
+			fprintf(datei, " ");
+			fprintf(datei, "\n");
+		}
+
+
+		fclose(datei);
+	}
+}
+
+void read_keyboard(int taste) {
+	switch (taste) {
+	case 49: game_mode = 2;		//Erkenne Taste: "1" und gehe zu Init_game()
+		break;
+	case 50: game_mode = 6;		//Erkenne Taste: "2" und gehe zu stats()
+		break;
+	case 51: quit = 1;			//Erkenne Taste: "3" und beende Programm
+		break;
+	case 77: p_cursor_x++;		//Erkenne Taste: "Pfeil rechts" und bewege Cursor Rechts
+		if (p_cursor_x > 29) p_cursor_x = 2;
+		break;
+	case 75: p_cursor_x--;		//Erkenne Taste: "Pfeil links" und bewege Cursor Links
+		if (p_cursor_x < 2) p_cursor_x = 29;
+		break;
+	case 109: shot = 1;			//Erkenne Taste: "M" und aktiviere Schuss
+		break;
+	default:
+		break;
+	}
+
+}
 //PROGRAMM ENDEEEE :-)
